@@ -8,12 +8,12 @@ import numpy as np
 from functools import reduce
 
 #mainで使う変数
-WALL_STROKE = 5
-WALL_COLOR = (255, 255, 255)
-PLAYER_STROKE = 5
-PLAYER_COLOR = (224, 224, 0)
-RAY_STROKE_COLOR = (248, 255, 151)
-RAY_STROKE = 1
+WALL_STROKE: int = 5
+WALL_COLOR: tuple = (255, 255, 255)
+PLAYER_STROKE: int = 5
+PLAYER_COLOR: tuple = (224, 224, 0)
+RAY_STROKE_COLOR: tuple = (248, 255, 151)
+RAY_STROKE: int = 1
 
 class Vec2:
     '''Vec2(int:x, int:y)
@@ -33,7 +33,7 @@ class Vec2:
         ベクトルの足し算
         b:足したいベクトル
         '''
-        a = self
+        a: Vec2 = self
         return Vec2(a.x+b.x, a.y+b.y)
 
     def sub(self, b):
@@ -41,7 +41,7 @@ class Vec2:
         ベクトルの引き算 
         b:引きたいベクトル
         '''
-        a = self
+        a: Vec2 = self
         return Vec2(a.x-b.x, a.y-b.y)
     
     def copy(self):
@@ -93,23 +93,23 @@ class Ray2(Vec2):
         このレイとr2との交点を求める
         '''
         r2: Ray2
-        r1 = self
+        r1: Ray2 = self
 
         #r1, r2を直線とみなして交点を求める
         #r1の傾き
-        t1 = r1.way.y / r1.way.x
+        t1: float = r1.way.y / r1.way.x
         #r2の傾き
-        t2 = r2.way.y / r2.way.x
+        t2: float = r2.way.y / r2.way.x
         
         #各座標
-        x1 = r1.pos.x
-        x2 = r2.pos.x
-        y1 = r1.pos.y
-        y2 = r2.pos.y
+        x1: float = r1.pos.x
+        x2: float = r2.pos.x
+        y1: float = r1.pos.y
+        y2: float = r2.pos.y
 
         #交点の座標
-        sx = (t1*x1 - t2*x2 - y1 + y2) / (t1 - t2)
-        sy = t1 * (sx - x1 ) + y1
+        sx: float  = (t1*x1 - t2*x2 - y1 + y2) / (t1 - t2)
+        sy: float = t1 * (sx - x1 ) + y1
 
         if min(r1.begin().x, r1.end().x) < sx < max(r1.begin().x, r1.end().x) and min(r2.begin().x, r2.end().x) < sx < max(r2.begin().x, r2.end().x):
             return Vec2(sx, sy)
@@ -120,6 +120,7 @@ class Ray2(Vec2):
     def with2p(begin: Vec2, end: Vec2) -> Any:
         '''
         位置ベクトルと方向ベクトルではなく、始点と終点からレイを作る。
+        return: Ray2(begin, end.sub(begin))
         '''
         return Ray2(begin, end.sub(begin))
     
@@ -200,7 +201,7 @@ def main():
             text = font.render("Player Angle: {}".format(degree_angle%360), True, (255,255,255))
             screen.blit(text, [200, 400])
             beam_index += 1
-            beam = Ray2(player.pos.copy(), Vec2(cos(angle), sin(angle)).mult(120))
+            beam: Ray2 = Ray2(player.pos.copy(), Vec2(cos(angle), sin(angle)).mult(120))
             #pygame.draw.line(screen, RAY_STROKE_COLOR, (beam.begin().x, beam.begin().y), (beam.end().x, beam.end().y), RAY_STROKE)
             
             #Rayが2枚以上の壁に当たっていたら、一番近いものを採用
@@ -210,31 +211,29 @@ def main():
             if len(allHitBeamsWays) == 0:
                 pygame.draw.line(screen, RAY_STROKE_COLOR, (beam.begin().x, beam.begin().y), (beam.end().x, beam.end().y), RAY_STROKE)
                 continue
-            hitBeam = reduce(lambda x, y: x if x.mag() < y.mag() else y, allHitBeamsWays)
+            hitBeam: Vec2 = reduce(lambda x, y: x if x.mag() < y.mag() else y, allHitBeamsWays)
 
             #3DViewに縦線を1本表示
             for i in wall:
-                hitPos = hitBeam.add(beam.begin())
+                hitPos: Vec2 = hitBeam.add(beam.begin())
                 #FPS視点を表示
-                wallDist = hitBeam.mag()
-                wallPerDist = wallDist * cos(angle - center_angle)
-                lineHeight = constrain(3500 / wallPerDist, 0, viewRect.way.y)
+                wallDist: float = hitBeam.mag()
+                wallPerDist: float = wallDist * cos(angle - center_angle)
+                lineHeight: int = constrain(3500 / wallPerDist, 0, viewRect.way.y)
                 lineHeight -= lineHeight % 8
-                lineBegin = viewRect.begin().add(
+                lineBegin: Vec2 = viewRect.begin().add(
                     Vec2(
                         viewRect.way.x/beam_total*beam_index, 
                         viewRect.way.y/2 - lineHeight/2
                     )
                 )
-                #pygame.draw.rect(screen, WALL_COLOR, Rect(lineBegin.x, lineBegin.y, 7, lineHeight))
-                lightness:int = 224
-                lmft: int = 1.3
+                
                 pillarSize: int = 5
 
                 if ((hitPos.x % 7 < pillarSize) or (hitPos.x % 7 > 7 - pillarSize)) and ((hitPos.y % 7 < pillarSize) or (hitPos.y > 7 - pillarSize)):
-                    WALL_3D_COLOR = (255, 255, 255)
+                    WALL_3D_COLOR: tuple = (255, 255, 255)
                 else:
-                    WALL_3D_COLOR = (215, 179, 111)
+                    WALL_3D_COLOR: tuple = (215, 179, 111)
 
                 pygame.draw.rect(screen, WALL_3D_COLOR, Rect(lineBegin.x, lineBegin.y, 7, lineHeight))
 
