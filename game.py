@@ -1,17 +1,19 @@
+from typing import Any
 from numpy.lib.function_base import place
 import pygame
 from pygame.locals import *
 import sys
 from math import * 
 import numpy as np
+from functools import reduce
 
 #mainで使う変数
 WALL_STROKE = 5
 WALL_COLOR = (255, 255, 255)
 PLAYER_STROKE = 5
-PLAYER_COLOR = (255, 255, 0)
-RAY_STROKE_COLOR = (255, 255, 0)
-RAY_STROKE = 2
+PLAYER_COLOR = (224, 224, 0)
+RAY_STROKE_COLOR = (248, 255, 151)
+RAY_STROKE = 1
 
 class Vec2:
     '''Vec2(int:x, int:y)
@@ -19,7 +21,10 @@ class Vec2:
         y:ベクトルのy成分
     '''
 
-    def __init__(self, x, y):
+    x: int
+    y: int
+
+    def __init__(self, x: int, y: int):
         self.x = x
         self.y = y
     
@@ -64,7 +69,10 @@ class Ray2(Vec2):
         pos:このレイの始点の位置ベクトル
         way:このレイの始点から伸びる方向ベクトル
     '''
-    def __init__(self, pos, way):
+    pos: Vec2
+    way: Vec2
+
+    def __init__(self, pos: Vec2, way: Vec2):
         self.pos = pos
         self.way = way
     
@@ -84,6 +92,7 @@ class Ray2(Vec2):
         '''
         このレイとr2との交点を求める
         '''
+        r2: Ray2
         r1 = self
 
         #r1, r2を直線とみなして交点を求める
@@ -104,10 +113,11 @@ class Ray2(Vec2):
 
         if min(r1.begin().x, r1.end().x) < sx < max(r1.begin().x, r1.end().x) and min(r2.begin().x, r2.end().x) < sx < max(r2.begin().x, r2.end().x):
             return Vec2(sx, sy)
-        else: None
+        else: 
+            None
 
     @staticmethod
-    def with2p(begin, end) -> "Ray2を返す":
+    def with2p(begin: Vec2, end: Vec2) -> Any:
         '''
         位置ベクトルと方向ベクトルではなく、始点と終点からレイを作る。
         '''
@@ -120,10 +130,10 @@ class Player:
     methods: self.pos{Vec2}, self.angle{int}
     '''
     def __init__(self):
-        self.pos = Vec2(0,0) #初期値
-        self.angle = 0 #初期値
+        self.pos: Vec2 = Vec2(0,0) #初期値
+        self.angle: int = 0 #初期値
 
-def constrain(value, min_value, max_value ):
+def constrain(value, min_value: int, max_value: int) -> int:
     '''
     min_value < value < max_valueの範囲に値を制限する
     この範囲より小さければvalue = min_value
@@ -132,7 +142,6 @@ def constrain(value, min_value, max_value ):
     return min(max_value, max(min_value, value))
 
 def main():
-
     (w,h) = (900,900)   # 画面サイズ
     player = Player()
     player.pos = Vec2(100, 200)
@@ -142,8 +151,10 @@ def main():
         Ray2.with2p(Vec2(100, 300), Vec2(250, 200)),
         Ray2.with2p(Vec2(250, 200), Vec2(50, 50)),
     ]
+
     pygame.init()       #初期化
     pygame.display.set_mode((w, h), 0, 32)  # 画面設定
+    font = pygame.font.Font(None, 30)  #fontの設定
     screen = pygame.display.get_surface()
 
     while (1):
@@ -168,37 +179,66 @@ def main():
         pygame.time.wait(30)        # 更新時間間隔
         screen.fill((0, 20, 0, 0))  # 画面の背景色
 
-        # 俯瞰図を描画
+        # 壁を描画
         for i in wall:
             pygame.draw.line(screen, WALL_COLOR, (i.begin().x, i.begin().y), (i.end().x, i.end().y), WALL_STROKE)
         
         #3DViewを描画
-        viewRect = Ray2(Vec2(380, 40), Vec2(320, 240))
+        viewRect: Vec2 = Ray2(Vec2(380, 40), Vec2(320, 240))
 
-        fov = pi / 2
-        center_angle = player.angle
-        leftAngle = center_angle - fov/2
-        rightAngle = center_angle + fov/2
-        beam_total = 32
-        beam_index = -1
-        angle = leftAngle
+        fov: int = pi / 2
+        center_angle: int = player.angle
+        degree_angle: int = -(center_angle * 180 / pi)
+        leftAngle: int = center_angle - fov/2
+        rightAngle: int = center_angle + fov/2
+        beam_total: int = 32
+        beam_index: int = -1
+        angle: int = leftAngle
 
-        while angle<rightAngle+0.01:
+        while angle<rightAngle-0.01:
             angle += fov/beam_total
+            text = font.render("Player Angle: {}".format(degree_angle%360), True, (255,255,255))
+            screen.blit(text, [200, 400])
             beam_index += 1
             beam = Ray2(player.pos.copy(), Vec2(cos(angle), sin(angle)).mult(120))
-            pygame.draw.line(screen, RAY_STROKE_COLOR, (beam.begin().x, beam.begin().y), (beam.end().x, beam.end().y), RAY_STROKE)
-            for i in wall:
-                hitPos = beam.intersection(i)
-                if hitPos is None:
-                    continue
-                pygame.draw.circle(screen, RAY_STROKE_COLOR, (hitPos.x, hitPos.y), 7)
+            #pygame.draw.line(screen, RAY_STROKE_COLOR, (beam.begin().x, beam.begin().y), (beam.end().x, beam.end().y), RAY_STROKE)
+            
+            #Rayが2枚以上の壁に当たっていたら、一番近いものを採用
+            allHitBeamsList: list = list(map(lambda x: beam.intersection(x), wall))
+            allHitBeamsNotNone: list = list(filter(lambda y : y is not None, allHitBeamsList))
+            allHitBeamsWays: list = list(map(lambda x: x.sub(beam.begin()), allHitBeamsNotNone))
+            if len(allHitBeamsWays) == 0:
+                pygame.draw.line(screen, RAY_STROKE_COLOR, (beam.begin().x, beam.begin().y), (beam.end().x, beam.end().y), RAY_STROKE)
+                continue
+            hitBeam = reduce(lambda x, y: x if x.mag() < y.mag() else y, allHitBeamsWays)
 
-                wallDist = hitPos.sub(beam.begin()).mag()
+            #3DViewに縦線を1本表示
+            for i in wall:
+                hitPos = hitBeam.add(beam.begin())
+                #FPS視点を表示
+                wallDist = hitBeam.mag()
                 wallPerDist = wallDist * cos(angle - center_angle)
-                lineHeight = constrain(2800 / wallPerDist, 0, viewRect.way.y)
-                lineBegin = viewRect.begin().add(Vec2(viewRect.way.x/beam_total*beam_index, viewRect.way.y/2 - lineHeight/2))
-                pygame.draw.rect(screen, WALL_COLOR, Rect(lineBegin.x, lineBegin.y, 7, lineHeight))
+                lineHeight = constrain(3500 / wallPerDist, 0, viewRect.way.y)
+                lineHeight -= lineHeight % 8
+                lineBegin = viewRect.begin().add(
+                    Vec2(
+                        viewRect.way.x/beam_total*beam_index, 
+                        viewRect.way.y/2 - lineHeight/2
+                    )
+                )
+                #pygame.draw.rect(screen, WALL_COLOR, Rect(lineBegin.x, lineBegin.y, 7, lineHeight))
+                lightness:int = 224
+                lmft: int = 1.3
+                pillarSize: int = 5
+
+                if ((hitPos.x % 7 < pillarSize) or (hitPos.x % 7 > 7 - pillarSize)) and ((hitPos.y % 7 < pillarSize) or (hitPos.y > 7 - pillarSize)):
+                    WALL_3D_COLOR = (255, 255, 255)
+                else:
+                    WALL_3D_COLOR = (215, 179, 111)
+
+                pygame.draw.rect(screen, WALL_3D_COLOR, Rect(lineBegin.x, lineBegin.y, 7, lineHeight))
+
+                pygame.draw.line(screen, WALL_3D_COLOR, (player.pos.x, player.pos.y), (player.pos.add(hitBeam).x, player.pos.add(hitBeam).y), 1)
 
         pygame.draw.rect(screen, (0, 156, 209), Rect(viewRect.pos.x, viewRect.pos.y, viewRect.way.x, viewRect.way.y), 7)
 
