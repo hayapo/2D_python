@@ -180,7 +180,7 @@ def main():
                 wallPerDist = wallDist * cos(angle - center_angle)
                 lineHeight = constrain(2800 / wallPerDist, 0, viewRect.way.y)
                 lineBegin = viewRect.begin().add(Vec2(viewRect.way.x/beam_total*beam_index, viewRect.way.y/2 - lineHeight/2))
-                pygame.draw.rect(screen, WALL_COLOR, Rect(lineBegin.x, lineBegin.y, 3, lineHeight))
+                pygame.draw.rect(screen, WALL_COLOR, Rect(lineBegin.x, lineBegin.y, 7, lineHeight))
 
         pygame.draw.rect(screen, (0, 156, 209), Rect(viewRect.pos.x, viewRect.pos.y, viewRect.way.x, viewRect.way.y), 7)
 
