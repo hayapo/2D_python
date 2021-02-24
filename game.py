@@ -5,6 +5,14 @@ import sys
 from math import * 
 import numpy as np
 
+#mainで使う変数
+WALL_STROKE = 5
+WALL_COLOR = (255, 255, 255)
+PLAYER_STROKE = 5
+PLAYER_COLOR = (255, 255, 0)
+RAY_STROKE_COLOR = (255, 255, 0)
+RAY_STROKE = 2
+
 class Vec2:
     '''Vec2(int:x, int:y)
         x:ベクトルのx成分
@@ -15,29 +23,40 @@ class Vec2:
         self.x = x
         self.y = y
     
-    #ベクトルの足し算
-    #b:足したいベクトル
     def add(self, b):
+        '''
+        ベクトルの足し算
+        b:足したいベクトル
+        '''
         a = self
         return Vec2(a.x+b.x, a.y+b.y)
 
-    #ベクトルの引き算 
-    #b:引きたいベクトル
     def sub(self, b):
+        '''
+        ベクトルの引き算 
+        b:引きたいベクトル
+        '''
         a = self
         return Vec2(a.x-b.x, a.y-b.y)
     
-    #ベクトルのコピー
     def copy(self):
+        '''
+        ベクトルのコピー
+        '''
         return Vec2(self.x, self.y)
 
-    #ベクトルの掛け算
-    #s:掛ける数
+    
     def mult(self, s):
+        '''
+        ベクトルの掛け算
+        s:掛ける数
+        '''
         return Vec2(s*self.x, s*self.y)
 
-    #ベクトルの大きさを求める
     def mag(self):
+        '''
+        ベクトルの大きさを求める
+        '''
         return sqrt(self.x**2 + self.y**2)
 
 class Ray2(Vec2):
@@ -61,7 +80,7 @@ class Ray2(Vec2):
         '''
         return self.pos.add(self.way)
 
-    def intersection(self, r2):
+    def intersection(self, r2) -> Vec2:
         '''
         このレイとr2との交点を求める
         '''
@@ -88,7 +107,7 @@ class Ray2(Vec2):
         else: None
 
     @staticmethod
-    def with2p(begin, end):
+    def with2p(begin, end) -> "Ray2を返す":
         '''
         位置ベクトルと方向ベクトルではなく、始点と終点からレイを作る。
         '''
@@ -105,15 +124,14 @@ class Player:
         self.angle = 0 #初期値
 
 def constrain(value, min_value, max_value ):
+    '''
+    min_value < value < max_valueの範囲に値を制限する
+    この範囲より小さければvalue = min_value
+    大きければvalue = max_value
+    '''
     return min(max_value, max(min_value, value))
 
 def main():
-    WALL_STROKE = 5
-    WALL_COLOR = (255, 255, 255)
-    PLAYER_STROKE = 5
-    PLAYER_COLOR = (255, 255, 0)
-    RAY_STROKE_COLOR = (255, 255, 0)
-    RAY_STROKE = 2
 
     (w,h) = (900,900)   # 画面サイズ
     player = Player()
