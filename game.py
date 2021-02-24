@@ -104,6 +104,8 @@ class Player:
         self.pos = Vec2(0,0) #初期値
         self.angle = 0 #初期値
 
+def constrain(value, min_value, max_value ):
+    return min(max_value, max(min_value, value))
 
 def main():
     WALL_STROKE = 5
@@ -147,21 +149,26 @@ def main():
         pygame.display.update()     # 画面更新
         pygame.time.wait(30)        # 更新時間間隔
         screen.fill((0, 20, 0, 0))  # 画面の背景色
-        # 円を描画
+
+        # 俯瞰図を描画
         for i in wall:
             pygame.draw.line(screen, WALL_COLOR, (i.begin().x, i.begin().y), (i.end().x, i.end().y), WALL_STROKE)
         
+        #3DViewを描画
+        viewRect = Ray2(Vec2(380, 40), Vec2(320, 240))
+
         fov = pi / 2
         center_angle = player.angle
         leftAngle = center_angle - fov/2
         rightAngle = center_angle + fov/2
-        beam_total = 30
+        beam_total = 32
         beam_index = -1
         angle = leftAngle
+
         while angle<rightAngle+0.01:
             angle += fov/beam_total
             beam_index += 1
-            beam = Ray2(player.pos.copy(), Vec2(cos(angle), sin(angle)).mult(100))
+            beam = Ray2(player.pos.copy(), Vec2(cos(angle), sin(angle)).mult(120))
             pygame.draw.line(screen, RAY_STROKE_COLOR, (beam.begin().x, beam.begin().y), (beam.end().x, beam.end().y), RAY_STROKE)
             for i in wall:
                 hitPos = beam.intersection(i)
@@ -169,13 +176,13 @@ def main():
                     continue
                 pygame.draw.circle(screen, RAY_STROKE_COLOR, (hitPos.x, hitPos.y), 7)
 
-                viewRoot = Vec2(480, 180)
                 wallDist = hitPos.sub(beam.begin()).mag()
-                wallPerDist = wallDist
-                lineHeight = 2800 / wallPerDist
-                lineBegin = viewRoot.add(Vec2(300/beam_total*beam_index, -lineHeight/2))
-                lineEnd = lineBegin.add(Vec2(0, lineHeight))
-                pygame.draw.line(screen, WALL_COLOR, (lineBegin.x, lineBegin.y), (lineEnd.x, lineEnd.y), 10)
+                wallPerDist = wallDist * cos(angle - center_angle)
+                lineHeight = constrain(2800 / wallPerDist, 0, viewRect.way.y)
+                lineBegin = viewRect.begin().add(Vec2(viewRect.way.x/beam_total*beam_index, viewRect.way.y/2 - lineHeight/2))
+                pygame.draw.rect(screen, WALL_COLOR, Rect(lineBegin.x, lineBegin.y, 7, lineHeight))
+
+        pygame.draw.rect(screen, (0, 156, 209), Rect(viewRect.pos.x, viewRect.pos.y, viewRect.way.x, viewRect.way.y), 7)
 
         # イベント処理
         for event in pygame.event.get():
