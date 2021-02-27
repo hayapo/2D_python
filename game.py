@@ -294,7 +294,7 @@ def main():
 
         pygame.display.update()     # 画面更新
         pygame.time.wait(30)        # 更新時間間隔
-        screen.fill((0, 20, 0, 0))  # 画面の背景色
+        screen.fill((50, 50, 50, 0))  # 画面の背景色
 
         # 壁を描画
         walls = game.level.walls
