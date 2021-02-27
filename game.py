@@ -185,7 +185,7 @@ class Level:
         self.walls.append(Ray2(Vec2(s*w, s*h), Vec2(-s*w, 0)))
         self.walls.append(Ray2(Vec2(s*w,s*h), Vec2(0, -s*h)))
     
-    def addtileMap(self, tileMap: str, width: int, height: int, size:int):
+    def addtileMap(self, tileMap: str, width: int, height: int, size:int) -> list:
         '''
         tileMap(str)から壁をタイルの形式で追加
         '''
